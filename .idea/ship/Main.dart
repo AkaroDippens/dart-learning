@@ -228,6 +228,7 @@ class Player {
           await logMove(name, row, col, 'Попадание');
         }
       }
+      await createGameLog(this, opponent);
     } else {
       while (true) {
         print('Введите координаты для атаки (строка и столбец):');
@@ -251,6 +252,7 @@ class Player {
           print(e);
         }
       }
+      await createGameLog(this, opponent);
     }
   }
 }
@@ -274,6 +276,7 @@ class Game {
     player1 = Player(player1Name, fieldSize, false);
     player2 = Player(player2Name, fieldSize, playAgainstBot);
 
+    await createGameLog(player1, player2);
     final ships = await _createShips(fieldSize);
     player1.placeShips(ships);
     player2.placeShips(ships);
@@ -319,7 +322,7 @@ class Game {
         print('${currentPlayer.name} победил!');
         await updatePlayerStats(currentPlayer.name, 1, 1, 0);
         await updatePlayerStats(opponent.name, 1, 0, 1);
-        await createGameLog(player1, player2);
+        await clearGameLog(player1.name, player2.name);
         break;
       }
 
@@ -344,7 +347,8 @@ Future<void> updatePlayerStats(String playerName, int gamesPlayed, int wins, int
 }
 
 Future<void> createGameLog(Player player1, Player player2) async {
-  final file = File('games/${player1.name}-${player2.name}.txt');
+  final sortedNames = [player1.name, player2.name]..sort();
+  final file = File('games/${sortedNames[0]}-${sortedNames[1]}.txt');
   await _ensureDirectoryExists(file.parent);
   final player1ShipsIntact = player1.field.ships.where((s) => !s.isSunk()).length;
   final player2ShipsIntact = player2.field.ships.where((s) => !s.isSunk()).length;
@@ -360,7 +364,8 @@ ${player2.name}: ${player2.field.hits} попаданий, ${player2.field.misse
 }
 
 Future<void> clearGameLog(String player1Name, String player2Name) async {
-  final file = File('games/$player1Name-$player2Name.txt');
+  final sortedNames = [player1Name, player2Name]..sort();
+  final file = File('games/${sortedNames[0]}-${sortedNames[1]}.txt');
   await _ensureDirectoryExists(file.parent);
   await file.delete();
 }
